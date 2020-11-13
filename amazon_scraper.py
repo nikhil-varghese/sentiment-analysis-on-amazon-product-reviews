@@ -116,7 +116,7 @@ def scraper(product_url):
 		latest_iteration.text(f"Scraping {progress}% completed.")
 		bar.progress(progress)
 		page += 1
-		if page == page_limit:
+		if page > page_limit:
 			print("Completed.")
 
 
@@ -133,6 +133,6 @@ if st.button('Start scraping'):
 	all_reviews_df, product_title = scraper(url)
 	st.write(all_reviews_df)
 	title = product_name(product_title)
-	all_reviews_df.to_csv(f"./{title} reviews.csv")
+	all_reviews_df.to_csv(f"Reviews/{title} reviews.csv")
 	st.write(f"Saved as '{title} reviews.csv'")
 
