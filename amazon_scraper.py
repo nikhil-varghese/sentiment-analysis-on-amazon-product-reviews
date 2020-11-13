@@ -17,11 +17,10 @@ url = st.text_input("Enter url for an amazon product")
 # Function to scrape the reviews
 def review_parse(url):
 	page_content = bs(url.content, 'lxml')
-	time.sleep(5)
 	reviews_list = page_content.find(id='cm_cr-review_list')
 
 	df = pd.DataFrame(columns = ['rating', 'rating_title', 'rating_description'])
-	time.sleep(5)
+	# time.sleep(5)
 
 	for item in range(10):
 		try:
@@ -40,7 +39,7 @@ def review_parse(url):
 		df = df.append({'rating': rating, 'rating_title': rating_title,
 						'rating_description': rating_description}, ignore_index=True)
 
-		print(df.iloc[item])
+		# print(df.iloc[item])
 
 
 	return df
@@ -70,10 +69,10 @@ def scraper(product_url):
 	url_match = product_page_parsed.find("a", class_="a-link-emphasis a-text-bold")["href"]
 
 	reviews_url = "https://www.amazon.in" + url_match + "&pageNumber="
-	print(reviews_url)
+	# print(reviews_url)
 
 	reviews_page = requests.get(reviews_url, headers=headers)
-	print(reviews_page.status_code)
+	# print(reviews_page.status_code)
 
 	reviews_page_parsed = bs(reviews_page.content, 'html.parser')
 
@@ -93,7 +92,7 @@ def scraper(product_url):
 	st.subheader(f"No. of reviews: {num_reviews}")
 
 	page_limit = math.ceil(num_reviews/10)
-	print(page_limit)
+	# print(page_limit)
 
 	all_reviews_df = pd.DataFrame(columns = ['rating', 'rating_title', 'rating_description'])
 	# print(all_reviews_df.head())
@@ -103,27 +102,37 @@ def scraper(product_url):
 	# Call parse function to scrape the reviews
 	while page <= page_limit:
 		full_url = reviews_url + str(page)
-		print(full_url)
+		print(f"Page = {page}/{page_limit}")
 		get_url = requests.get(full_url)
-
+		print(get_url.status_code)
+		while get_url.status_code != 200:
+			time.sleep(2)
+			print("Retrying......")
+			get_url = requests.get(full_url)
+			print(get_url.status_code)
 		partial_df = review_parse(get_url)
 		progress = round((page/page_limit)*100)
 		all_reviews_df = all_reviews_df.append(partial_df, ignore_index=True)
 		latest_iteration.text(f"Scraping {progress}% completed.")
 		bar.progress(progress)
 		page += 1
+		if page == page_limit:
+			print("Completed.")
 
 
 	return all_reviews_df, product_title
 
+def product_name(product_title):
+	title = product_title.split(' ')
+	title = ' '.join(title[:3])
+	title = title.split('/')
+	title = ' '.join(title)
+	return title
 # Save the dataframe of reviews to a csv file
 if st.button('Start scraping'):
 	all_reviews_df, product_title = scraper(url)
-	prod = product_title.split(' ')
-	title = ' '.join(prod[:3])
-	title = title.split('/')
-	title = ' '.join(title)
 	st.write(all_reviews_df)
+	title = product_name(product_title)
 	all_reviews_df.to_csv(f"./{title} reviews.csv")
 	st.write(f"Saved as '{title} reviews.csv'")
 
