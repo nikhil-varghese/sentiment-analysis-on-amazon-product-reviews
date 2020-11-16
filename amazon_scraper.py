@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup as bs
 import math
 import time
 import streamlit as st
+import os
 
 import nltk
 import pickle
@@ -33,6 +34,9 @@ plt.style.use("seaborn-pastel")
 st.title("Amazon product review analysis")
 
 url = "https://amazon.in"
+
+path_reviews = "/home/nik/Projects/Amazon Product Review Analysis/Reviews/"
+path_cleaned = "/home/nik/Projects/Amazon Product Review Analysis/Cleaned Reviews/"
 
 url = st.text_input("Enter url for an amazon product")
 # Function to scrape the reviews
@@ -155,6 +159,8 @@ if st.button('Start scraping'):
 	title = product_name(product_title)
 	all_reviews_df.to_csv(f"Reviews/{title} reviews.csv")
 	st.success(f"Saved as '{title} reviews.csv'")
+	holder = 1
+
 
 def get_wordnet_pos(tag):
     if tag.startswith('J'):
@@ -169,7 +175,9 @@ def get_wordnet_pos(tag):
         return wordnet.NOUN
 
 def clean_data(filename):
-	df = pd.read_csv(f"./{filename}", index_col="Unnamed: 0")
+	filepath = str(path_reviews) + str(filename)
+	df = pd.read_csv(f"{filepath}", index_col="Unnamed: 0")
+	print("file read")
 	df.drop(['title'], axis=1, inplace=True)
 	df.dropna(axis=0, inplace=True)
 	# Remove contractions
@@ -202,9 +210,88 @@ def clean_data(filename):
 
 	wnl = WordNetLemmatizer()
 	df['lemmatized'] = df['wordnet_pos'].apply(lambda x: [wnl.lemmatize(word, tag) for (word, tag) in x])
-	df.to_pickle(f"./reviews_cleaned.pkl")
+	df = df[['rating', 'lemmatized']]
+	df.to_pickle(f"./Cleaned Reviews/{filename}_cleaned.pkl")
 	st.success("Data cleaned.")
 
 
-if st.button('Clean Scraped Data'):
-	clean_data('reviews.csv')
+directory_1 = os.listdir(path_reviews)
+review_data = []
+for files in review_data:
+	review_data.append(files)
+print(review_data)
+option_1 = st.selectbox(
+	'Select Dataset',
+	directory_1
+	)
+
+if st.button('Clean Selected Data'):
+		with st.spinner("Started Cleaning"):
+			clean_data(str(option_1))
+
+def data_viz(filename):
+	filepath = str(path_cleaned) + str(filename)
+	df = pd.read_pickle(filepath)
+
+	df['lemma_str'] = [' '.join(map(str, l)) for l in df['lemmatized']]
+	df['sentiment'] = df['lemma_str'].apply(lambda x: TextBlob(x).sentiment.polarity)
+
+	df['word_count'] = df['lemmatized'].apply(lambda x: len(str(x).split()))
+	df['review_len'] = df['lemma_str'].apply(len)
+
+	plt.title('Sentiment Distribution')
+	plt.hist(df['sentiment'], bins=50)
+	plt.xlabel('Sentiment')
+	plt.ylabel('Frequency')
+	plt.grid()
+	st.pyplot()
+
+	x_rating = df['rating'].value_counts().sort_index(ascending=False)
+	plt.title("Rating Distribution")
+	plt.bar(x_rating.index, x_rating, alpha=0.8)
+	plt.xlabel("Rating")
+	plt.ylabel("Frequency")
+	plt.grid()
+	st.pyplot()
+
+	plt.title('Percentage of ratings')
+	plt.pie(x_rating, labels=['Rating 5', 'Rating 4', 'Rating 3', 'Rating 2', 'Rating 1'],
+	        autopct='%1.0f%%', pctdistance=0.7, labeldistance=1.1, wedgeprops=dict(width=0.5))
+	plt.tight_layout()
+	st.pyplot()
+
+	polarity_avg = df.groupby('rating')['sentiment'].mean()
+	plt.title("Average sentiment per rating")
+	plt.bar(polarity_avg.index, polarity_avg)
+	plt.xlabel('Rating')
+	plt.ylabel('Average Sentiment')
+	plt.grid()
+	st.pyplot()
+
+	# words = df['lemmatized']
+	# allwords = []
+	# for wordlist in words:
+	#     allwords += wordlist
+
+	# mostcommon = FreqDist(allwords).most_common(10)
+
+	# wordcloud = WordCloud(background_color='white').generate(str(mostcommon))
+	# fig = plt.figure(figsize=(30, 20), facecolor='white')
+	# plt.imshow(wordcloud, interpolation='bilinear')
+	# plt.axis('off')
+	# plt.title("Top most common 100 words")
+	# st.pyplot()
+
+directory_2 = os.listdir(path_cleaned)
+review_data = []
+for files in review_data:
+	review_data.append(files)
+print(review_data)
+option_2 = st.selectbox(
+	'Select Dataset',
+	directory_2
+	)
+
+if st.button('Visualize Data'):
+		with st.spinner("Loading Visualization"):
+			data_viz(str(option_2))
