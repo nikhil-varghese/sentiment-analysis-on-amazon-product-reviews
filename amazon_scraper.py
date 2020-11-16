@@ -8,6 +8,27 @@ import math
 import time
 import streamlit as st
 
+import nltk
+import pickle
+import string
+import fasttext
+import contractions
+import matplotlib.pyplot as plt
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords, wordnet
+from nltk.stem import WordNetLemmatizer
+
+import seaborn as sns
+from textblob import TextBlob
+import pyLDAvis.sklearn
+from collections import Counter
+from nltk.probability import FreqDist
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.decomposition import LatentDirichletAllocation, NMF
+from wordcloud import WordCloud, ImageColorGenerator
+
+
+plt.style.use("seaborn-pastel")
 
 st.title("Amazon product review analysis")
 
@@ -19,7 +40,7 @@ def review_parse(url):
 	page_content = bs(url.content, 'lxml')
 	reviews_list = page_content.find(id='cm_cr-review_list')
 
-	df = pd.DataFrame(columns = ['rating', 'rating_title', 'rating_description'])
+	df = pd.DataFrame(columns = ['rating', 'title', 'description'])
 	# time.sleep(5)
 
 	for item in range(10):
@@ -28,16 +49,16 @@ def review_parse(url):
 		except:
 			rating = None
 		try:
-			rating_title = (reviews_list.find_all(class_="review-title"))[item].text.replace('\n', '')
+			title = (reviews_list.find_all(class_="review-title"))[item].text.replace('\n', '')
 		except:
-			rating_title = None
+			title = None
 		try:
-			rating_description = (reviews_list.find_all(class_="review-text"))[item].text.replace('\n', '')
+			description = (reviews_list.find_all(class_="review-text"))[item].text.replace('\n', '')
 		except:
-			rating_description = None
+			description = None
 
-		df = df.append({'rating': rating, 'rating_title': rating_title,
-						'rating_description': rating_description}, ignore_index=True)
+		df = df.append({'rating': rating, 'title': title,
+						'description': description}, ignore_index=True)
 
 		# print(df.iloc[item])
 
@@ -94,7 +115,7 @@ def scraper(product_url):
 	page_limit = math.ceil(num_reviews/10)
 	# print(page_limit)
 
-	all_reviews_df = pd.DataFrame(columns = ['rating', 'rating_title', 'rating_description'])
+	all_reviews_df = pd.DataFrame(columns = ['rating', 'title', 'description'])
 	# print(all_reviews_df.head())
 	page = 1
 	latest_iteration = st.empty()
@@ -105,16 +126,18 @@ def scraper(product_url):
 		print(f"Page = {page}/{page_limit}")
 		get_url = requests.get(full_url)
 		print(get_url.status_code)
+
 		while get_url.status_code != 200:
 			time.sleep(2)
 			print("Retrying......")
 			get_url = requests.get(full_url)
 			print(get_url.status_code)
+
 		partial_df = review_parse(get_url)
 		progress = round((page/page_limit)*100)
 		all_reviews_df = all_reviews_df.append(partial_df, ignore_index=True)
-		latest_iteration.text(f"Scraping {progress}% completed.")
 		bar.progress(progress)
+		latest_iteration.text(f"Scraping {progress}% completed.")
 		page += 1
 		if page > page_limit:
 			print("Completed.")
@@ -123,16 +146,65 @@ def scraper(product_url):
 	return all_reviews_df, product_title
 
 def product_name(product_title):
-	title = product_title.split(' ')
-	title = ' '.join(title[:3])
-	title = title.split('/')
+	title = product_title.split('/')
 	title = ' '.join(title)
 	return title
 # Save the dataframe of reviews to a csv file
 if st.button('Start scraping'):
 	all_reviews_df, product_title = scraper(url)
-	st.write(all_reviews_df)
 	title = product_name(product_title)
 	all_reviews_df.to_csv(f"Reviews/{title} reviews.csv")
-	st.write(f"Saved as '{title} reviews.csv'")
+	st.success(f"Saved as '{title} reviews.csv'")
 
+def get_wordnet_pos(tag):
+    if tag.startswith('J'):
+        return wordnet.ADJ
+    elif tag.startswith('V'):
+        return wordnet.VERB
+    elif tag.startswith('N'):
+        return wordnet.NOUN
+    elif tag.startswith('R'):
+        return wordnet.ADV
+    else:
+        return wordnet.NOUN
+
+def clean_data(filename):
+	df = pd.read_csv(f"./{filename}", index_col="Unnamed: 0")
+	df.drop(['title'], axis=1, inplace=True)
+	df.dropna(axis=0, inplace=True)
+	# Remove contractions
+	df['no_contract_desc'] = df['description'].apply(lambda x: [contractions.fix(word) for word in x.split()])
+	df['description_str'] = [' '.join(map(str, l)) for l in df['no_contract_desc']]
+
+	pretrained_model = "/home/nik/Downloads/lid.176.bin"
+	model = fasttext.load_model(pretrained_model)
+
+	langs = []
+	for sent in df['description_str']:
+	    lang = model.predict(sent)[0]
+	    langs.append(str(lang)[11:13])
+
+	df['langs'] = langs
+	df = df.loc[df['langs'] == 'en']
+
+	df['tokenized'] = df['description_str'].apply(word_tokenize)
+	df['lower'] = df['tokenized'].apply(lambda x: [word.lower() for word in x])
+
+	punc = string.punctuation
+	df['no_punc'] = df['lower'].apply(lambda x: [word for word in x if word not in punc])
+
+	stop_words = set(stopwords.words('english'))
+	df['stopwords_removed'] = df['no_punc'].apply(lambda x: [word for word in x if word not in stop_words])
+
+	df['pos_tags'] = df['stopwords_removed'].apply(nltk.tag.pos_tag)
+
+	df['wordnet_pos'] = df['pos_tags'].apply(lambda x: [(word, get_wordnet_pos(pos_tag)) for (word, pos_tag) in x])
+
+	wnl = WordNetLemmatizer()
+	df['lemmatized'] = df['wordnet_pos'].apply(lambda x: [wnl.lemmatize(word, tag) for (word, tag) in x])
+	df.to_pickle(f"./reviews_cleaned.pkl")
+	st.success("Data cleaned.")
+
+
+if st.button('Clean Scraped Data'):
+	clean_data('reviews.csv')
