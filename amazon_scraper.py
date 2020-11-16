@@ -38,7 +38,7 @@ url = "https://amazon.in"
 path_reviews = "/home/nik/Projects/Amazon Product Review Analysis/Reviews/"
 path_cleaned = "/home/nik/Projects/Amazon Product Review Analysis/Cleaned Reviews/"
 
-url = st.text_input("Enter url for an amazon product")
+url = st.sidebar.text_input("Enter url for an amazon product")
 # Function to scrape the reviews
 def review_parse(url):
 	page_content = bs(url.content, 'lxml')
@@ -154,7 +154,7 @@ def product_name(product_title):
 	title = ' '.join(title)
 	return title
 # Save the dataframe of reviews to a csv file
-if st.button('Start scraping'):
+if st.sidebar.button('Start scraping'):
 	all_reviews_df, product_title = scraper(url)
 	title = product_name(product_title)
 	all_reviews_df.to_csv(f"Reviews/{title} reviews.csv")
@@ -211,6 +211,8 @@ def clean_data(filename):
 	wnl = WordNetLemmatizer()
 	df['lemmatized'] = df['wordnet_pos'].apply(lambda x: [wnl.lemmatize(word, tag) for (word, tag) in x])
 	df = df[['rating', 'lemmatized']]
+	temp = filename.split('.')
+	filename = temp[0]
 	df.to_pickle(f"./Cleaned Reviews/{filename}_cleaned.pkl")
 	st.success("Data cleaned.")
 
@@ -220,12 +222,12 @@ review_data = []
 for files in review_data:
 	review_data.append(files)
 print(review_data)
-option_1 = st.selectbox(
-	'Select Dataset',
+option_1 = st.sidebar.selectbox(
+	'Select Dataset to clean',
 	directory_1
 	)
 
-if st.button('Clean Selected Data'):
+if st.sidebar.button('Clean Selected Data'):
 		with st.spinner("Started Cleaning"):
 			clean_data(str(option_1))
 
@@ -287,11 +289,11 @@ review_data = []
 for files in review_data:
 	review_data.append(files)
 print(review_data)
-option_2 = st.selectbox(
-	'Select Dataset',
+option_2 = st.sidebar.selectbox(
+	'Select Dataset to visualize',
 	directory_2
 	)
 
-if st.button('Visualize Data'):
+if st.sidebar.button('Visualize Data'):
 		with st.spinner("Loading Visualization"):
 			data_viz(str(option_2))
