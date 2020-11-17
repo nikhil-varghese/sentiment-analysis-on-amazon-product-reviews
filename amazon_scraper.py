@@ -35,8 +35,7 @@ st.title("Amazon product review analysis")
 
 url = "https://amazon.in"
 
-path_reviews = "/home/nik/Projects/Amazon Product Review Analysis/Reviews/"
-path_cleaned = "/home/nik/Projects/Amazon Product Review Analysis/Cleaned Reviews/"
+path = "./Cleaned Reviews/"
 
 url = st.sidebar.text_input("Enter url for an amazon product")
 # Function to scrape the reviews
@@ -74,14 +73,17 @@ def scraper(product_url):
 	# Scrape the product page for required data
 	headers = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64;     x64; rv:66.0) Gecko/20100101 Firefox/66.0", "Accept-Encoding":"gzip, deflate",     "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "DNT":"1","Connection":"close", "Upgrade-Insecure-Requests":"1"}
 	# product_url = "https://www.amazon.in/gp/product/0198700989/ref=ox_sc_saved_title_5?smid=AT95IG9ONZD7S&psc=1"
-	product_page = requests.get(product_url, headers=headers)
-	print(product_page.status_code)
+	try:
+		product_page = requests.get(product_url, headers=headers)
+		print(product_page.status_code)
 
-	product_page_parsed = bs(product_page.content, 'lxml')
+		product_page_parsed = bs(product_page.content, 'lxml')
 
-	# Product name
-	product_title = product_page_parsed.find(id='productTitle').text.strip('\n')
-	st.header(product_title)
+		# Product name
+		product_title = product_page_parsed.find(id='productTitle').text.strip('\n')
+		st.header(product_title)
+	except:
+		st.subheader("Please enter a valid amazon.in product url")
 
 	try:
 		# Average rating for the product
@@ -156,13 +158,6 @@ def product_name(product_title):
 	title = product_title.split('/')
 	title = ' '.join(title)
 	return title
-# Save the dataframe of reviews to a csv file
-if st.sidebar.button('Start scraping'):
-	all_reviews_df, product_title = scraper(url)
-	if product_title != 1:
-		title = product_name(product_title)
-		all_reviews_df.to_csv(f"Reviews/{title} reviews.csv")
-		st.success(f"Saved as '{title} reviews.csv'")
 
 
 def get_wordnet_pos(tag):
@@ -177,10 +172,7 @@ def get_wordnet_pos(tag):
     else:
         return wordnet.NOUN
 
-def clean_data(filename):
-	filepath = str(path_reviews) + str(filename)
-	df = pd.read_csv(f"{filepath}", index_col="Unnamed: 0")
-	print("file read")
+def clean_data(df, title):
 	df.drop(['title'], axis=1, inplace=True)
 	df.dropna(axis=0, inplace=True)
 	# Remove contractions
@@ -214,28 +206,13 @@ def clean_data(filename):
 	wnl = WordNetLemmatizer()
 	df['lemmatized'] = df['wordnet_pos'].apply(lambda x: [wnl.lemmatize(word, tag) for (word, tag) in x])
 	df = df[['rating', 'lemmatized']]
-	temp = filename.split('.')
-	filename = temp[0]
-	df.to_pickle(f"./Cleaned Reviews/{filename}_cleaned.pkl")
-	st.success("Data cleaned.")
 
+	df.to_pickle(f"./Cleaned Reviews/{title}_cleaned.pkl")
+	st.success("Data scraped, cleaned and saved.")
 
-directory_1 = os.listdir(path_reviews)
-review_data = []
-for files in review_data:
-	review_data.append(files)
-print(review_data)
-option_1 = st.sidebar.selectbox(
-	'Select Dataset to clean',
-	directory_1
-	)
-
-if st.sidebar.button('Clean Selected Data'):
-		with st.spinner("Started Cleaning"):
-			clean_data(str(option_1))
 
 def data_viz(filename):
-	filepath = str(path_cleaned) + str(filename)
+	filepath = str(path) + str(filename)
 	df = pd.read_pickle(filepath)
 
 	df['lemma_str'] = [' '.join(map(str, l)) for l in df['lemmatized']]
@@ -287,16 +264,24 @@ def data_viz(filename):
 	# plt.title("Top most common 100 words")
 	# st.pyplot()
 
-directory_2 = os.listdir(path_cleaned)
+# Save the dataframe of reviews to a csv file
+if st.sidebar.button('Start scraping'):
+	all_reviews_df, product_title = scraper(url)
+	if product_title != 1:
+		title = product_name(product_title)
+		clean_data(all_reviews_df, title)
+		# st.success(f"Saved as '{title} reviews.csv'")
+
+directory = os.listdir(path)
 review_data = []
 for files in review_data:
 	review_data.append(files)
 print(review_data)
-option_2 = st.sidebar.selectbox(
+option = st.sidebar.selectbox(
 	'Select Dataset to visualize',
-	directory_2
+	directory
 	)
 
 if st.sidebar.button('Visualize Data'):
 		with st.spinner("Loading Visualization"):
-			data_viz(str(option_2))
+			data_viz(str(option))
