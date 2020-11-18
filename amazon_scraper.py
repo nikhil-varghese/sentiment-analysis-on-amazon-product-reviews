@@ -31,13 +31,10 @@ from wordcloud import WordCloud, ImageColorGenerator
 
 plt.style.use("seaborn-pastel")
 
-st.title("Amazon product review analysis")
-
 url = "https://amazon.in"
 
 path = "./Cleaned Reviews/"
 
-url = st.sidebar.text_input("Enter url for an amazon product")
 # Function to scrape the reviews
 def review_parse(url):
 	page_content = bs(url.content, 'lxml')
@@ -83,7 +80,8 @@ def scraper(product_url):
 		product_title = product_page_parsed.find(id='productTitle').text.strip('\n')
 		st.header(product_title)
 	except:
-		st.subheader("Please enter a valid amazon.in product url")
+		st.error("Please enter a valid amazon.in product url")
+		return None, 1
 
 	try:
 		# Average rating for the product
@@ -151,7 +149,7 @@ def scraper(product_url):
 		return all_reviews_df, product_title
 
 	except:
-		st.subheader("No reviews for the product")
+		st.warning("No reviews for the product")
 		return None, 1
 
 def product_name(product_title):
@@ -215,11 +213,16 @@ def data_viz(filename):
 	filepath = str(path) + str(filename)
 	df = pd.read_pickle(filepath)
 
+	st.markdown("# {} sentiment analysis".format(filename.split('_')[0]))
+
 	df['lemma_str'] = [' '.join(map(str, l)) for l in df['lemmatized']]
 	df['sentiment'] = df['lemma_str'].apply(lambda x: TextBlob(x).sentiment.polarity)
 
 	df['word_count'] = df['lemmatized'].apply(lambda x: len(str(x).split()))
 	df['review_len'] = df['lemma_str'].apply(len)
+
+	average_sentiment = round(df['sentiment'].mean(), 2)
+	st.subheader(f"Average sentiment: {average_sentiment}")
 
 	plt.title('Sentiment Distribution')
 	plt.hist(df['sentiment'], bins=50)
@@ -264,24 +267,36 @@ def data_viz(filename):
 	# plt.title("Top most common 100 words")
 	# st.pyplot()
 
-# Save the dataframe of reviews to a csv file
-if st.sidebar.button('Start scraping'):
-	all_reviews_df, product_title = scraper(url)
-	if product_title != 1:
-		title = product_name(product_title)
-		clean_data(all_reviews_df, title)
-		# st.success(f"Saved as '{title} reviews.csv'")
+def homepage():
+	st.title("Enter Amazon product url to fetch data")
+	url = st.text_input("Enter url for an amazon product")
+	if st.button('Start scraping'):
+		all_reviews_df, product_title = scraper(url)
+		if product_title != 1:
+			title = product_name(product_title)
+			clean_data(all_reviews_df, title)
 
-directory = os.listdir(path)
-review_data = []
-for files in review_data:
-	review_data.append(files)
-print(review_data)
-option = st.sidebar.selectbox(
-	'Select Dataset to visualize',
-	directory
-	)
+def analysis_page():
+	directory = os.listdir(path)
+	review_data = []
+	for files in review_data:
+		review_data.append(files)
+	print(review_data)
+	option = st.sidebar.selectbox(
+		'Select Dataset to visualize',
+		directory
+		)
 
-if st.sidebar.button('Visualize Data'):
-		with st.spinner("Loading Visualization"):
-			data_viz(str(option))
+	with st.spinner("Loading Visualization"):
+		data_viz(str(option))
+
+def main():
+	page = st.sidebar.selectbox(
+		'Select Page', ['Home', "Sentiment Analysis"])
+
+	if page == 'Home':
+		homepage()
+	else:
+		analysis_page()
+
+main()
