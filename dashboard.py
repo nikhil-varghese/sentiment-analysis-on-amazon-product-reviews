@@ -60,16 +60,16 @@ def visualize(filename):
 	plt.grid()
 	st.pyplot()
 
-	# words = df['lemmatized']
-	# allwords = []
-	# for wordlist in words:
-	#     allwords += wordlist
+	words = df['lemmatized']
+	allwords = []
+	for wordlist in words:
+	    allwords += wordlist
 
-	# mostcommon = FreqDist(allwords).most_common(10)
+	mostcommon = FreqDist(allwords).most_common(25)
 
-	# wordcloud = WordCloud(background_color='white').generate(str(mostcommon))
-	# fig = plt.figure(figsize=(30, 20), facecolor='white')
-	# plt.imshow(wordcloud, interpolation='bilinear')
-	# plt.axis('off')
-	# plt.title("Top most common 100 words")
-	# st.pyplot()
+	wordcloud = WordCloud(background_color='white').generate(str(mostcommon))
+	fig = plt.figure(figsize=(30, 20), facecolor='white')
+	plt.imshow(wordcloud, interpolation='bilinear')
+	plt.axis('off')
+	plt.title("Top most common 100 words")
+	st.pyplot()
