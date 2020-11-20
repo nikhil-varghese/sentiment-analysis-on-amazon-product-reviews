@@ -30,7 +30,7 @@ def clean_data(df, title):
 	df['no_contract_desc'] = df['description'].apply(lambda x: [contractions.fix(word) for word in x.split()])
 	df['description_str'] = [' '.join(map(str, l)) for l in df['no_contract_desc']]
 
-	pretrained_model = "./lid.176.bin"
+	pretrained_model = "/home/nik/Downnloads/lid.176.bin"
 	model = fasttext.load_model(pretrained_model)
 
 	langs = []
