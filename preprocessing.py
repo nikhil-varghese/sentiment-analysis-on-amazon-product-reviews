@@ -30,16 +30,16 @@ def clean_data(df, title):
 	df['no_contract_desc'] = df['description'].apply(lambda x: [contractions.fix(word) for word in x.split()])
 	df['description_str'] = [' '.join(map(str, l)) for l in df['no_contract_desc']]
 
-	pretrained_model = "/home/nik/Downnloads/lid.176.bin"
-	model = fasttext.load_model(pretrained_model)
+	#pretrained_model = "/home/nik/Downloads/lid.176.bin"
+	#model = fasttext.load_model(pretrained_model)
 
-	langs = []
-	for sent in df['description_str']:
-	    lang = model.predict(sent)[0]
-	    langs.append(str(lang)[11:13])
+	#langs = []
+	#for sent in df['description_str']:
+	#    lang = model.predict(sent)[0]
+	#    langs.append(str(lang)[11:13])
 
-	df['langs'] = langs
-	df = df.loc[df['langs'] == 'en']
+	#df['langs'] = langs
+	#df = df.loc[df['langs'] == 'en']
 
 	df['tokenized'] = df['description_str'].apply(word_tokenize)
 	df['lower'] = df['tokenized'].apply(lambda x: [word.lower() for word in x])

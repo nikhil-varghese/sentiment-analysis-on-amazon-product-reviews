@@ -13,6 +13,7 @@ from sklearn.decomposition import LatentDirichletAllocation, NMF
 from wordcloud import WordCloud, ImageColorGenerator
 
 plt.style.use("seaborn-pastel")
+st.set_option('deprecation.showPyplotGlobalUse', False)
 
 path = "./Cleaned Reviews/"
 
@@ -53,7 +54,7 @@ def visualize(filename):
 	st.pyplot()
 
 	polarity_avg = df.groupby('rating')['sentiment'].mean()
-	plt.title("Average sentiment per rating")
+	plt.title("Average sentiment by rating")
 	plt.bar(polarity_avg.index, polarity_avg)
 	plt.xlabel('Rating')
 	plt.ylabel('Average Sentiment')
@@ -65,13 +66,13 @@ def visualize(filename):
 	for wordlist in words:
 	    allwords += wordlist
 
-	mostcommon = FreqDist(allwords).most_common(25)
+	mostcommon = FreqDist(allwords).most_common(50)
 
 	wordcloud = WordCloud(background_color='white').generate(str(mostcommon))
-	fig = plt.figure(figsize=(30, 20), facecolor='white')
+	fig = plt.figure(figsize=(60, 60), facecolor='white')
 	plt.imshow(wordcloud, interpolation='bilinear')
 	plt.axis('off')
-	plt.title("Top most common 100 words")
+	plt.title("Most common 100 words")
 	st.pyplot()
 
 	mostcommon_small = FreqDist(allwords).most_common(25)

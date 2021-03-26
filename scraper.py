@@ -37,10 +37,6 @@ def review_parse(url):
 
 		df = df.append({'rating': rating, 'title': title,
 						'description': description}, ignore_index=True)
-
-		# print(df.iloc[item])
-
-
 	return df
 
 
@@ -59,47 +55,56 @@ def scraper(product_url):
 		st.header(product_title)
 	except:
 		st.error("Please enter a valid amazon.in product url")
-		return None, 1
-
+		return None
 	try:
 		# Average rating for the product
-		average_rating = product_page_parsed.find('i', class_='a-icon-star').text[:3]
+		average_rating = product_page_parsed.find('i',
+								class_='a-icon-star').text[:3]
 		st.subheader(f"Average Rating:  {average_rating}")
 
 		num_ratings = product_page_parsed.find(id='acrCustomerReviewText').text[:-7]
 		# num_ratings = int(num_ratings[0].text[:-15])
 		st.subheader(f"No. of ratings: {num_ratings}")
 
-		url_match = product_page_parsed.find("a", class_="a-link-emphasis a-text-bold")["href"]
+		url_match = product_page_parsed.find("a",
+			class_="a-link-emphasis a-text-bold")["href"]
 
 		reviews_url = "https://www.amazon.in" + url_match + "&pageNumber="
-		# print(reviews_url)
+		print(reviews_url)
 
 		reviews_page = requests.get(reviews_url, headers=headers)
-		# print(reviews_page.status_code)
+		print(reviews_page.status_code)
 
 		reviews_page_parsed = bs(reviews_page.content, 'html.parser')
-
+		# print(reviews_page_parsed)
 		ratings_dist = []
-		for i in reviews_page_parsed.find_all('div', class_='a-meter'):
-		    ratings_dist.append(int(i['aria-label'].strip('%')))
-		s_customer = ratings_dist[0] + ratings_dist[1]
-
-		st.subheader(f"4 stars and above: {s_customer}%")
+		print(100*"*")
+		ratings_list = reviews_page_parsed.find_all('div',
+									class_='a-link-normal')
+		print(ratings_list)
+		if ratings_list != []:
+			for i in ratings_list:
+				print("Looping ratings")
+				ratings_dist.append(int(i['aria-label'].strip('%')))
+			s_customer = ratings_dist[0] + ratings_dist[1]
+			print(ratings_dist)
+			print(s_customer)
+			st.subheader(f"4 stars and above: {s_customer}%")
 
 		reviews_list = reviews_page_parsed.find(id='cm_cr-review_list')
 
-		# Find total number of reviews to calculate the number of pages to be scraped
+		# Find total number of reviews, to calculate the number of pages to be scraped
 		num_reviews = reviews_page_parsed.find(id='filter-info-section').div.text.replace('\n', '').strip()
 		num_reviews = num_reviews.split('|')[1][1:-14]
 		num_reviews = int(num_reviews.replace(',',''))
 		st.subheader(f"No. of reviews: {num_reviews}")
 
 		page_limit = math.ceil(num_reviews/10)
-		# print(page_limit)
+		print(page_limit)
 
-		all_reviews_df = pd.DataFrame(columns = ['rating', 'title', 'description'])
-		# print(all_reviews_df.head())
+		all_reviews_df = pd.DataFrame(columns = ['rating', 'title',
+													'description'])
+		print(all_reviews_df.head())
 		page = 1
 		latest_iteration = st.empty()
 		bar = st.progress(0)
@@ -118,7 +123,8 @@ def scraper(product_url):
 
 			partial_df = review_parse(get_url)
 			progress = round((page/page_limit)*100)
-			all_reviews_df = all_reviews_df.append(partial_df, ignore_index=True)
+			all_reviews_df = all_reviews_df.append(partial_df,
+				ignore_index=True)
 			bar.progress(progress)
 			latest_iteration.text(f"Scraping {progress}% completed.")
 			page += 1
