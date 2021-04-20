@@ -2,7 +2,6 @@ import pandas as pd
 import nltk
 import pickle
 import string
-import fasttext
 import contractions
 import matplotlib.pyplot as plt
 from nltk.tokenize import word_tokenize
