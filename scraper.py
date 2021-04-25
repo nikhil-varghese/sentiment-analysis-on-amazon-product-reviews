@@ -18,12 +18,12 @@ def review_parse(url):
 	page_content = bs(url.content, 'lxml')
 	reviews_list = page_content.find(id='cm_cr-review_list')
 
-	df = pd.DataFrame(columns = ['rating', 'title', 'description'])
+	df = pd.DataFrame(columns = ['rating', 'title', 'description', 'helpful'])
 	# time.sleep(5)
 
 	for item in range(10):
 		try:
-			rating = (reviews_list.find_all(class_="review-rating"))[item].text[:3]
+			rating = int(reviews_list.find_all(class_="review-rating")[item].text[:1])
 		except:
 			rating = None
 		try:
@@ -34,15 +34,19 @@ def review_parse(url):
 			description = (reviews_list.find_all(class_="review-text"))[item].text.replace('\n', '')
 		except:
 			description = None
+		try:
+			helpful = int(reviews_list.find_all(class_="cr-vote-text")[item].text.split(" ")[0])
+		except:
+			helpful = 0
 
 		df = df.append({'rating': rating, 'title': title,
-						'description': description}, ignore_index=True)
+			'description': description, 'helpful': helpful}, ignore_index=True)
 	return df
 
 
 def scraper(product_url):
 	# Scrape the product page for required data
-	headers = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64;     x64; rv:66.0) Gecko/20100101 Firefox/66.0", "Accept-Encoding":"gzip, deflate",     "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "DNT":"1","Connection":"close", "Upgrade-Insecure-Requests":"1"}
+	headers = {"User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.72 Safari/537.36", "Accept-Encoding":"gzip, deflate",     "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "DNT":"1","Connection":"close", "Upgrade-Insecure-Requests":"1"}
 	# product_url = "https://www.amazon.in/gp/product/0198700989/ref=ox_sc_saved_title_5?smid=AT95IG9ONZD7S&psc=1"
 	try:
 		product_page = requests.get(product_url, headers=headers)
@@ -54,6 +58,7 @@ def scraper(product_url):
 		product_title = product_page_parsed.find(id='productTitle').text.strip('\n')
 		st.header(product_title)
 	except:
+		print(product_page_parsed.prettify())
 		st.error("Please enter a valid amazon.in product url")
 		return None
 	try:
