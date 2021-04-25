@@ -93,7 +93,7 @@ def visualize(filename):
 			title_text="Basic Summary", showlegend=False)
 	st.plotly_chart(fig1)
 
-	fig2 = px.scatter(df, x="polarity", y="subjectivity", color="rating", hover_data=['lemma_str'],
+	fig2 = px.scatter(df, x="polarity", y="subjectivity", color="rating",
     		title="Polarity vs Subjectivity Scatter plot",
     		)
 	fig2.update_layout(height=700, width=1000,
@@ -131,3 +131,14 @@ def visualize(filename):
 	st.markdown("Subjectivity : {}".format(best_review['subjectivity'][0]))
 
 	st.markdown(best_review['description'][0])
+
+	extreme_positive_reviews = df.loc[(df['polarity'] == 1) & (df['subjectivity'] == 1)]['description'].head().tolist()
+	extreme_negative_reviews = df.loc[(df['polarity'] == -1) & (df['subjectivity'] == 1)]['description'].head().tolist()
+
+	st.markdown("## Extreme Positive Reviews")
+	for i in extreme_positive_reviews:
+		st.markdown(i)
+
+	st.markdown("## Extreme Negative Reviews")
+	for j in extreme_negative_reviews:
+		st.markdown(j)
