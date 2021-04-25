@@ -36,13 +36,6 @@ def clean_data(df, title):
 	df['no_contract_desc'] = df['description'].apply(lambda x: [contractions.fix(word) for word in x.split()])
 	df['description_str'] = [' '.join(map(str, l)) for l in df['no_contract_desc']]
 
-	#langs = []
-	#for sent in df['description_str']:
-	#    lang = model.predict(sent)[0]
-	#    langs.append(str(lang)[11:13])
-
-	#df['langs'] = langs
-	#df = df.loc[df['langs'] == 'en']
 
 	df['tokenized'] = df['description_str'].apply(word_tokenize)
 	df['lower'] = df['tokenized'].apply(lambda x: [word.lower() for word in x])
@@ -69,13 +62,13 @@ def clean_data(df, title):
 	df['lemmatized'] = df['wordnet_pos'].apply(lambda x: [wnl.lemmatize(word, tag) for (word, tag) in x])
 
 	df['lemma_str'] = [' '.join(map(str, l)) for l in df['lemmatized']]
-	df['polarity'] = df['lemma_str'].apply(lambda x: TextBlob(x).sentiment.polarity)
-	df['subjectivity'] = df['lemma_str'].apply(lambda x: TextBlob(x).sentiment.subjectivity)
+	df['polarity'] = df['lemma_str'].apply(lambda x: round(TextBlob(x).sentiment.polarity, 3))
+	df['subjectivity'] = df['lemma_str'].apply(lambda x: round(TextBlob(x).sentiment.subjectivity, 3))
 
 
 	df['word_count'] = df['description'].apply(lambda x: len(str(x).split()))
 
-	df = df[['rating', 'helpful', 'word_count', 'polarity', 'subjectivity', 'description', 'lemmatized', 'lemma_str']]
+	df = df[['rating', 'helpful', 'word_count', 'polarity', 'subjectivity', 'title', 'description', 'lemmatized', 'lemma_str']]
 
 	path = "./Cleaned Reviews/"
 	filename = title + "_cleaned.pkl"
