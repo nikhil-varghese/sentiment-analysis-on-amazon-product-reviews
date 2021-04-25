@@ -22,8 +22,9 @@ def homepage():
 	if st.button('Fetch Data'):
 		all_reviews_df, product_title = scraper.scraper(url)
 		if all_reviews_df is not None:
+			st.dataframe(all_reviews_df.head())
 			title = preprocessing.product_name(product_title)
-			all_reviews_df.to_csv(f"/home/nik/HDD/Datasets/Amazon Reviews/{title}.csv")
+			# all_reviews_df.to_csv(f"./Amazon Reviews/{title}.csv")
 			preprocessing.clean_data(all_reviews_df, title)
 
 def analysis_page():
