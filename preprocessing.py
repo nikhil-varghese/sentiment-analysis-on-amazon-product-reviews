@@ -68,7 +68,7 @@ def clean_data(df, title):
 
 	df['word_count'] = df['description'].apply(lambda x: len(str(x).split()))
 
-	df = df[['rating', 'helpful', 'word_count', 'polarity', 'subjectivity', 'title', 'description', 'lemmatized', 'lemma_str']]
+	df = df[['rating', 'helpful', 'word_count', 'polarity', 'subjectivity', 'description', 'lemmatized', 'lemma_str']]
 
 	path = "./Cleaned Reviews/"
 	filename = title + "_cleaned.pkl"

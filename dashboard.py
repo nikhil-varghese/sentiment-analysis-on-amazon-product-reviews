@@ -32,34 +32,6 @@ def visualize(filename):
 	word_count_avg = df.groupby('rating')['word_count'].mean()
 	subjectivity_avg = df.groupby('rating')['subjectivity'].mean()
 
-	std_polarity = np.std(df['polarity'])
-
-	# fig, ax = plt.subplots(3, 2)
-	# num_bins = 20
-
-	# ax[0][0].set_title('Sentiment Distribution')
-	# n, bins, patches = ax[0][0].hist(df['polarity'], num_bins, density=True)
-	# # add a 'best fit' line
-	# y = ((1 / (np.sqrt(2 * np.pi) * std_polarity)) *
-	#      np.exp(-0.5 * (1 / std_polarity * (bins - avg_polarity))**2))
-	# ax[0][0].plot(bins, y, '-')
-
-	# ax[1][0].set_title("Rating Distribution")
-	# ax[1][0].bar(x_rating.index, x_rating)
-
-	# ax[1][1].set_title("Average words by rating")
-	# ax[1][1].bar(word_count_avg.index, word_count_avg)
-
-	# ax[2][0].set_title("Average sentiment by rating")
-	# ax[2][0].bar(polarity_avg.index, polarity_avg)
-
-	# ax[2][1].set_title("Average subjectivity by rating")
-	# ax[2][1].bar(subjectivity_avg.index, subjectivity_avg)
-
-	# fig.tight_layout()
-	# st.pyplot()
-
-
 	fig1 = make_subplots(
 	    rows=3, cols=2,
 	    print_grid=True,
