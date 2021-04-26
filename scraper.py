@@ -15,6 +15,10 @@ url = "https://amazon.in"
 
 # Function to scrape the reviews
 def review_parse(url):
+	"""
+		Function to scrape the Amazon product review url and save the review to a dataframe
+		Input: url, Url of Reviews page
+	"""
 	page_content = bs(url.content, 'lxml')
 	reviews_list = page_content.find(id='cm_cr-review_list')
 
@@ -45,6 +49,9 @@ def review_parse(url):
 
 
 def scraper(product_url):
+	"""
+		Function to scrape the Amazon product url
+	"""
 	# Scrape the product page for required data
 	headers = {"User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.72 Safari/537.36", "Accept-Encoding":"gzip, deflate",     "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "DNT":"1","Connection":"close", "Upgrade-Insecure-Requests":"1"}
 	# product_url = "https://www.amazon.in/gp/product/0198700989/ref=ox_sc_saved_title_5?smid=AT95IG9ONZD7S&psc=1"
@@ -142,6 +149,9 @@ def scraper(product_url):
 		return None, 1
 
 def product_name(product_title):
+	"""
+		Function to extract product name
+	"""
 	title = product_title.split('/')
 	title = ' '.join(title)
 	return title

@@ -19,13 +19,20 @@ st.set_option('deprecation.showPyplotGlobalUse', False)
 path = "./Cleaned Reviews/"
 
 def visualize(filename):
+	"""
+		Function to visualize Amazon reviews
+
+		Input: Filename of cleaned dataset
+	"""
 	filepath = str(path) + str(filename)
 	df = pd.read_pickle(filepath)
 
 	st.markdown("# {} sentiment analysis".format(filename.split('_')[0]))
 
 	avg_polarity = round(df['polarity'].mean(), 2)
-	st.header(f"Average sentiment: {avg_polarity}")
+	median_polarity = round(df['polarity'].median(), 2)
+	st.header(f"Mean sentiment: {avg_polarity}")
+	st.header(f"Median sentiment: {median_polarity}")
 
 	x_rating = df['rating'].value_counts().sort_index(ascending=False)
 	polarity_avg = df.groupby('rating')['polarity'].mean()
@@ -33,6 +40,13 @@ def visualize(filename):
 	subjectivity_avg = df.groupby('rating')['subjectivity'].mean()
 
 	# Sentiment Distribution
+	st.markdown("### Polarity")
+	st.markdown("Polarity represents the emotion in a review. Its value ranges from -1 to 1.\
+			If polarity is 1, the sentiment in the review is highly positive.\
+			Else, if it is -1, the sentiment is highly negative. If polarity is 0, sentiment is neutral.")
+	st.markdown("### Subjectivity")
+	st.markdown("Subjectivity represents how opinionated a review is. Its value ranges from 0 to 1. If the value is 0, the review is based on facts.\
+			Else if the value is 1, the review is highly opinionated.")
 
 	fig1 = make_subplots(
 	    rows=1, cols=2,
@@ -46,7 +60,7 @@ def visualize(filename):
 	    go.Histogram(x=df['subjectivity'], nbinsx=20),
 	    row=1, col=2)
 
-	fig1.update_traces(marker_color='rgb(58,102,225)', opacity=0.6)
+	fig1.update_traces(marker_color='rgb(8,23,154)', opacity=0.4)
 
 	fig1.update_layout(height=400, width=1000, template='ggplot2',
 			title_text="Sentiment", showlegend=False)
@@ -54,7 +68,6 @@ def visualize(filename):
 	st.plotly_chart(fig1)
 
 	# Basic Statistics
-
 	fig2 = make_subplots(
 		rows=2, cols=2,
 		subplot_titles=("Ratings count", "Average Word Count by rating",
@@ -82,6 +95,7 @@ def visualize(filename):
 			title_text="Basic Summary", showlegend=False, bargap=0.3)
 	st.plotly_chart(fig2)
 
+	# Polarity vs Subjectivity scatter plot
 	fig3 = px.scatter(df, x="polarity", y="subjectivity", color="rating",
     		title="Polarity vs Subjectivity Scatter plot",
     		)
@@ -92,6 +106,7 @@ def visualize(filename):
 	df1 = df.loc[(df['rating'] >= 3) ]
 	df2= df.loc[(df['rating'] < 3)]
 
+	# Positive review WordCloud
 	positive_reviews = df1['lemma_str'].tolist()
 	if positive_reviews != []:
 		wordcloud = WordCloud(width=1000, height=600, background_color='white', colormap='summer').generate(str(positive_reviews))
@@ -101,6 +116,7 @@ def visualize(filename):
 		plt.title("Positive Reviews")
 		st.pyplot()
 
+	# Negative review WordCloud
 	negative_reviews = df2['lemma_str'].tolist()
 	if negative_reviews != []:
 		wordcloud = WordCloud(width=1000, height=600, background_color='white', colormap='autumn').generate(str(negative_reviews))
@@ -109,7 +125,7 @@ def visualize(filename):
 		plt.axis('off')
 		plt.title("Negative Reviews")
 		st.pyplot()
-
+	# Most helpful review
 	best_review = df.sort_values(by=['helpful'], ascending=False)
 
 	st.markdown("## Most Helpful Review")
@@ -120,7 +136,7 @@ def visualize(filename):
 	st.markdown("Subjectivity : {}".format(best_review['subjectivity'][0]))
 
 	st.markdown(best_review['description'][0])
-
+	# Extreme Reviews
 	extreme_positive_reviews = df.loc[(df['polarity'] == 1) & (df['subjectivity'] == 1)]['description'].head().tolist()
 	extreme_negative_reviews = df.loc[(df['polarity'] == -1) & (df['subjectivity'] == 1)]['description'].head().tolist()
 
