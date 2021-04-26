@@ -32,11 +32,11 @@ def visualize(filename):
 	word_count_avg = df.groupby('rating')['word_count'].mean()
 	subjectivity_avg = df.groupby('rating')['subjectivity'].mean()
 
+	# Sentiment Distribution
+
 	fig1 = make_subplots(
-	    rows=3, cols=2,
-	    print_grid=True,
-	    subplot_titles=("Polarity Distribution", "Subjectivity Distribution", "Ratings count", 
-	    	"Average Word Count by rating", "Average Sentiment by rating", "Subjectivity by rating"))
+	    rows=1, cols=2,
+	    subplot_titles=("Polarity Distribution", "Subjectivity Distribution"))
 
 	fig1.add_trace(
 	    go.Histogram(x=df['polarity'], nbinsx=20),
@@ -46,31 +46,48 @@ def visualize(filename):
 	    go.Histogram(x=df['subjectivity'], nbinsx=20),
 	    row=1, col=2)
 
-	fig1.add_trace(
-	    go.Bar(x=x_rating.index, y=x_rating),
-	    row=2, col=1)
+	fig1.update_traces(marker_color='rgb(58,102,225)', opacity=0.6)
 
-	fig1.add_trace(go.Bar(x=word_count_avg.index, y=word_count_avg),
-			row=2, col=2)
+	fig1.update_layout(height=400, width=1000, template='ggplot2',
+			title_text="Sentiment", showlegend=False)
 
-	fig1.add_trace(
-			go.Bar(x=subjectivity_avg.index, y=polarity_avg),
-			row=3, col=1)
-
-	fig1.add_trace(
-			go.Bar(x=subjectivity_avg.index, y=subjectivity_avg),
-			row=3, col=2)
-
-	fig1.update_layout(height=1000, width=1000, template='ggplot2',
-			title_text="Basic Summary", showlegend=False)
 	st.plotly_chart(fig1)
 
-	fig2 = px.scatter(df, x="polarity", y="subjectivity", color="rating",
+	# Basic Statistics
+
+	fig2 = make_subplots(
+		rows=2, cols=2,
+		subplot_titles=("Ratings count", "Average Word Count by rating",
+			"Average Sentiment by rating", "Subjectivity by rating"))
+
+	fig2.add_trace(
+	    go.Bar(x=x_rating.index, y=x_rating),
+	    row=1, col=1)
+
+	fig2.add_trace(go.Bar(x=word_count_avg.index, y=word_count_avg),
+			row=1, col=2)
+
+	fig2.add_trace(
+			go.Bar(x=subjectivity_avg.index, y=polarity_avg),
+			row=2, col=1)
+
+	fig2.add_trace(
+			go.Bar(x=subjectivity_avg.index, y=subjectivity_avg),
+			row=2, col=2)
+
+	fig2.update_traces(marker_color='rgb(58,102,225)', marker_line_color='rgb(8,38,57)',
+                  marker_line_width=2.5, opacity=0.6)
+
+	fig2.update_layout(height=800, width=1000, template='ggplot2',
+			title_text="Basic Summary", showlegend=False, bargap=0.3)
+	st.plotly_chart(fig2)
+
+	fig3 = px.scatter(df, x="polarity", y="subjectivity", color="rating",
     		title="Polarity vs Subjectivity Scatter plot",
     		)
-	fig2.update_layout(height=700, width=1000,
+	fig3.update_layout(height=700, width=1000,
     		template='seaborn')
-	st.plotly_chart(fig2)
+	st.plotly_chart(fig3)
 
 	df1 = df.loc[(df['rating'] >= 3) ]
 	df2= df.loc[(df['rating'] < 3)]
