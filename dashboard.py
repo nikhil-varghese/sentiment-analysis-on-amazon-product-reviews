@@ -6,11 +6,7 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-import pyLDAvis.sklearn
 from collections import Counter
-from nltk.probability import FreqDist
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-from sklearn.decomposition import LatentDirichletAllocation, NMF
 from wordcloud import WordCloud, ImageColorGenerator
 
 plt.style.use("seaborn-muted")
