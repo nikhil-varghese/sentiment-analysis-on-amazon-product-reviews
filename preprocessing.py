@@ -28,22 +28,28 @@ def get_wordnet_pos(tag):
         return wordnet.NOUN
 
 def clean_data(df, title):
+	"""
+		Function to clean and preprocess the reviews dataset for analysis
+		Input: df, Dataframe to preprocess
+			   title, Product title to save as a pickle file
+	"""
 	df.drop(['title'], axis=1, inplace=True)
 	df.dropna(axis=0, inplace=True)
-	# df['rating'] = df['rating'].astype(int)
-	# df['helpful'] = df['helpful'].astype(int)
+
 	# Remove contractions
 	df['no_contract_desc'] = df['description'].apply(lambda x: [contractions.fix(word) for word in x.split()])
 	df['description_str'] = [' '.join(map(str, l)) for l in df['no_contract_desc']]
 
-
+	# Tokenize reviews
 	df['tokenized'] = df['description_str'].apply(word_tokenize)
 	df['lower'] = df['tokenized'].apply(lambda x: [word.lower() for word in x])
 	print(f"Title: {title}")
 
+	# Remove punctuations
 	punc = string.punctuation
 	df['no_punc'] = df['lower'].apply(lambda x: [word for word in x if word not in punc])
 
+	# Remove stop words
 	stop_words = set(stopwords.words('english'))
 	stop_words.add('book')
 	product_name = re.findall(r'\w+', title.lower())
@@ -57,7 +63,7 @@ def clean_data(df, title):
 	df['pos_tags'] = df['stopwords_removed'].apply(nltk.tag.pos_tag)
 
 	df['wordnet_pos'] = df['pos_tags'].apply(lambda x: [(word, get_wordnet_pos(pos_tag)) for (word, pos_tag) in x])
-
+	# Lemmatize reviews
 	wnl = WordNetLemmatizer()
 	df['lemmatized'] = df['wordnet_pos'].apply(lambda x: [wnl.lemmatize(word, tag) for (word, tag) in x])
 
@@ -68,7 +74,7 @@ def clean_data(df, title):
 
 	df['word_count'] = df['description'].apply(lambda x: len(str(x).split()))
 
-	df = df[['rating', 'helpful', 'word_count', 'polarity', 'subjectivity', 'title', 'description', 'lemmatized', 'lemma_str']]
+	df = df[['rating', 'helpful', 'word_count', 'polarity', 'subjectivity', 'description', 'lemmatized', 'lemma_str']]
 
 	path = "./Cleaned Reviews/"
 	filename = title + "_cleaned.pkl"
