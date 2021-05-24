@@ -1,4 +1,4 @@
-# Amazon Product Review Analysisi
+# Amazon Product Review Analysis
 > A streamlit web app to perform sentiment analysis on Amazon reviews.
 
 <!-- [![NPM Version][npm-image]][npm-url]
